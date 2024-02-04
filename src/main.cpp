@@ -7,14 +7,19 @@
 #include "qcustomplot.h"
 #include <sstream>
 #include <iostream>
-#include "LV.h"
+#include <QThread>
+#include <QMetaType>
+#include "SimulationWorker.h"
 
 void plotData(QCustomPlot *customPlot, const std::string &simulationOutput);
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
+	qRegisterMetaType<std::string>("std::string");
     QWidget window;
-    QVBoxLayout *layout = new QVBoxLayout(&window);
+	window.resize(1280, 720);
+    /* QVBoxLayout *layout = new QVBoxLayout(&window); */
+	QGridLayout *layout = new QGridLayout(&window);
 
     // Creating input fields for each parameter
     QLineEdit *latticeSizeInput = new QLineEdit(&window);
@@ -28,22 +33,22 @@ int main(int argc, char *argv[]) {
     QCustomPlot *plotArea = new QCustomPlot(&window);
 
     // Add widgets to layout
-    layout->addWidget(new QLabel("Lattice Size:"));
-    layout->addWidget(latticeSizeInput);
-    layout->addWidget(new QLabel("Number of Time Steps:"));
-    layout->addWidget(numOfTimeStepsInput);
-    layout->addWidget(new QLabel("Initial Density (n0):"));
-    layout->addWidget(initialDensityInput);
-    layout->addWidget(new QLabel("Death Rate:"));
-    layout->addWidget(deathRateInput);
-    layout->addWidget(new QLabel("Birth Rate:"));
-    layout->addWidget(birthRateInput);
-    layout->addWidget(new QLabel("Predation Rate:"));
-    layout->addWidget(predRateInput);
-    layout->addWidget(new QLabel("Capacity (K):"));
-    layout->addWidget(capacityInput);
-    layout->addWidget(runButton);
-    layout->addWidget(plotArea);
+    layout->addWidget(new QLabel("Lattice Size:"),0,0);
+    layout->addWidget(latticeSizeInput,0,1);
+    layout->addWidget(new QLabel("Number of Time Steps:"),1,0);
+    layout->addWidget(numOfTimeStepsInput,1,1);
+    layout->addWidget(new QLabel("Initial Density (n0):"),2,0);
+    layout->addWidget(initialDensityInput,2,1);
+    layout->addWidget(new QLabel("Death Rate:"),3,0);
+    layout->addWidget(deathRateInput,3,1);
+    layout->addWidget(new QLabel("Birth Rate:"),4,0);
+    layout->addWidget(birthRateInput,4,1);
+    layout->addWidget(new QLabel("Predation Rate:"),5,0);
+    layout->addWidget(predRateInput,5,1);
+    layout->addWidget(new QLabel("Capacity (K):"),6,0);
+    layout->addWidget(capacityInput,6,1);
+    layout->addWidget(runButton,7,0,1,2);
+    layout->addWidget(plotArea,8,0,1,2);
 
     // Connect button signal to slot
     QObject::connect(runButton, &QPushButton::clicked, [&](){
@@ -55,9 +60,16 @@ int main(int argc, char *argv[]) {
         double pred_rate = predRateInput->text().toDouble();
         int K = capacityInput->text().toInt();
 
-        std::string output = runLVSimulation(lattice_size, num_of_timesteps, n0, death_rate, birth_rate, pred_rate, K);
-        plotData(plotArea, output); // Plot the data
-    });
+		SimulationWorker* worker = new SimulationWorker(lattice_size, num_of_timesteps, n0, death_rate, birth_rate, pred_rate, K);
+		QThread* thread = new QThread();
+		worker->moveToThread(thread);
+		QObject::connect(thread, &QThread::started, worker, &SimulationWorker::runSimulation);
+		QObject::connect(worker, &SimulationWorker::simulationComplete, plotArea, [plotArea](const std::string& result) {
+				plotData(plotArea, result); // This now executes in the main thread
+				}, Qt::QueuedConnection);
+
+    thread->start();
+		});
 
     window.show();
     return app.exec();
@@ -66,6 +78,7 @@ int main(int argc, char *argv[]) {
 void plotData(QCustomPlot *customPlot, const std::string &simulationOutput) {
     QVector<double> x, y;
     std::istringstream iss(simulationOutput);
+	std::cout << simulationOutput << std::endl;
     std::string line;
     while (std::getline(iss, line)) {
         double value1, value2;
@@ -74,7 +87,12 @@ void plotData(QCustomPlot *customPlot, const std::string &simulationOutput) {
         y.append(value2);
     }
 
+	customPlot->setInteractions(QCP::iRangeZoom | QCP::iRangeDrag);
+	customPlot->axisRect()->setRangeZoom(Qt::Horizontal | Qt::Vertical);
+	customPlot->axisRect()->setRangeDrag(Qt::Horizontal | Qt::Vertical);
     customPlot->addGraph();
+	customPlot->setInteraction(QCP::iRangeDrag, true);
+	customPlot->setInteraction(QCP::iSelectPlottables, true);
     customPlot->graph(0)->setData(x, y);
     customPlot->replot();
 }

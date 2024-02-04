@@ -160,6 +160,8 @@ LatticeSimulator::LatticeSimulator(int size, double death, double birth, double 
 	ostringstream oss; // String stream to build the output string
 
 	string LatticeSimulator::run_simulation(int num_of_timesteps, double n0) {
+		oss.str("");
+		oss.clear();
 		N[0] = N[1] = static_cast<int>(n0 * lattice_size * lattice_size);
 		initialize_lattice(N[0], K);
 
