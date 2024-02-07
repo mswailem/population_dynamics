@@ -14,11 +14,15 @@
 void plotData(QCustomPlot *customPlot, const std::string &simulationOutput);
 
 int main(int argc, char *argv[]) {
+
     QApplication app(argc, argv);
+	
+	//This line is necessary to use std::string in signal/slot connections
 	qRegisterMetaType<std::string>("std::string");
+	
+	// Setting up window
     QWidget window;
 	window.resize(1280, 720);
-    /* QVBoxLayout *layout = new QVBoxLayout(&window); */
 	QGridLayout *layout = new QGridLayout(&window);
 
     // Creating input fields for each parameter
@@ -68,7 +72,7 @@ int main(int argc, char *argv[]) {
 				plotData(plotArea, result); // This now executes in the main thread
 				}, Qt::QueuedConnection);
 
-    thread->start();
+		thread->start();
 		});
 
     window.show();
