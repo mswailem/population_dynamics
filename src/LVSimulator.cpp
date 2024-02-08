@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <sstream>
+#include <array>
+#include <iostream>
 #include "LVSimulator.h"
 
 
@@ -19,8 +21,8 @@ void LatticeSimulator::initialize_lattice(int N) {
 }
 
 //Pick a random neighbor of a site
-array<int, 2> LatticeSimulator::pick_neighbor_random(int x, int y) {
-	array<int, 2> site;
+std::array<int, 2> LatticeSimulator::pick_neighbor_random(int x, int y) {
+	std::array<int, 2> site;
 	int dice_dir = static_cast<int>(dist(rng) * 4);
 
 	//This picks a random neighbor of a site and checks boudnaries based on the dice roll
@@ -30,8 +32,8 @@ array<int, 2> LatticeSimulator::pick_neighbor_random(int x, int y) {
 }
 
 //Pick a neighbor of a site weighted by the number of prey
-array<int, 2> LatticeSimulator::pick_neighbor_prey(int x, int y) {
-	array<int, 2> site;
+std::array<int, 2> LatticeSimulator::pick_neighbor_prey(int x, int y) {
+	std::array<int, 2> site;
 
 	//Define the neighbors
 	int right = (x + 1) % lattice_size;
@@ -160,7 +162,6 @@ LatticeSimulator::LatticeSimulator()
 	: N(2, 0) {}
 
 void LatticeSimulator::run_simulation(int size, double death, double birth, double pred,int num_of_timesteps, double n0) {
-
 	death_rate = death;
 	birth_rate = birth;
 	pred_rate = pred;
@@ -199,7 +200,7 @@ void LatticeSimulator::run_simulation_SFML(int size, double death, double birth,
 	lattice_size = size;
 
 	N[0] = N[1] = static_cast<int>(n0 * lattice_size * lattice_size);
-	Lattice = vector<vector<vector<int>>>(2, vector<vector<int>>(lattice_size, vector<int>(lattice_size, 0)));
+	Lattice = std::vector<std::vector<std::vector<int>>>(2, std::vector<std::vector<int>>(lattice_size, std::vector<int>(lattice_size, 0)));
 	initialize_lattice(N[0]);
 
 	sf::VideoMode desktop = sf::VideoMode::getDesktopMode();

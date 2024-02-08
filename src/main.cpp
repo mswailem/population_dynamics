@@ -34,6 +34,14 @@ int main(int argc, char *argv[]) {
     QLineEdit *predRateInput = new QLineEdit(&window);
     QPushButton *runButton = new QPushButton("Run Simulation", &window);
     QCustomPlot *plotArea = new QCustomPlot(&window);
+	
+	// Set default values
+	latticeSizeInput->setText("5");
+	numOfTimeStepsInput->setText("100");
+	initialDensityInput->setText("0.5");
+	deathRateInput->setText("0.5");
+	birthRateInput->setText("0.5");
+	predRateInput->setText("0.5");
 
     // Add widgets to layout
     layout->addWidget(new QLabel("Lattice Size:"),0,0);
@@ -60,12 +68,14 @@ int main(int argc, char *argv[]) {
         double birth_rate = birthRateInput->text().toDouble();
         double pred_rate = predRateInput->text().toDouble();
 
-		LVSimulator* worker = new LVSimulator();
+		LatticeSimulator* worker = new LatticeSimulator();
 		QThread* thread = new QThread();
 		worker->moveToThread(thread);
-		QObject::connect(thread, &QThread::started, worker, &LVSimulator::run_simulatrion);
-		QObject::connect(worker, &LVSimulator::simulationComplete, plotArea, [plotArea](const std::string& result) {
-				plotData(plotArea, result); // This now executes in the main thread
+		QObject::connect(thread, &QThread::started, worker, [worker, lattice_size, num_of_timesteps, n0, death_rate, birth_rate, pred_rate]() {
+			worker->run_simulation(lattice_size,death_rate,birth_rate,pred_rate,num_of_timesteps,n0);
+			});
+		QObject::connect(worker, &LatticeSimulator::simulationComplete, plotArea, [plotArea](const std::string& result) {
+				plotData(plotArea, result);
 				}, Qt::QueuedConnection);
 
 		thread->start();
@@ -78,7 +88,6 @@ int main(int argc, char *argv[]) {
 void plotData(QCustomPlot *customPlot, const std::string &simulationOutput) {
     QVector<double> x, y;
     std::istringstream iss(simulationOutput);
-	std::cout << simulationOutput << std::endl;
     std::string line;
     while (std::getline(iss, line)) {
         double value1, value2;
