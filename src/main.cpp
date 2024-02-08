@@ -9,7 +9,7 @@
 #include <iostream>
 #include <QThread>
 #include <QMetaType>
-#include "SimulationWorker.h"
+#include "LVSimulator.h"
 
 void plotData(QCustomPlot *customPlot, const std::string &simulationOutput);
 
@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
     QLineEdit *deathRateInput = new QLineEdit(&window);
     QLineEdit *birthRateInput = new QLineEdit(&window);
     QLineEdit *predRateInput = new QLineEdit(&window);
-    QLineEdit *capacityInput = new QLineEdit(&window);
     QPushButton *runButton = new QPushButton("Run Simulation", &window);
     QCustomPlot *plotArea = new QCustomPlot(&window);
 
@@ -49,8 +48,6 @@ int main(int argc, char *argv[]) {
     layout->addWidget(birthRateInput,4,1);
     layout->addWidget(new QLabel("Predation Rate:"),5,0);
     layout->addWidget(predRateInput,5,1);
-    layout->addWidget(new QLabel("Capacity (K):"),6,0);
-    layout->addWidget(capacityInput,6,1);
     layout->addWidget(runButton,7,0,1,2);
     layout->addWidget(plotArea,8,0,1,2);
 
@@ -62,13 +59,12 @@ int main(int argc, char *argv[]) {
         double death_rate = deathRateInput->text().toDouble();
         double birth_rate = birthRateInput->text().toDouble();
         double pred_rate = predRateInput->text().toDouble();
-        int K = capacityInput->text().toInt();
 
-		SimulationWorker* worker = new SimulationWorker(lattice_size, num_of_timesteps, n0, death_rate, birth_rate, pred_rate, K);
+		LVSimulator* worker = new LVSimulator();
 		QThread* thread = new QThread();
 		worker->moveToThread(thread);
-		QObject::connect(thread, &QThread::started, worker, &SimulationWorker::runSimulation);
-		QObject::connect(worker, &SimulationWorker::simulationComplete, plotArea, [plotArea](const std::string& result) {
+		QObject::connect(thread, &QThread::started, worker, &LVSimulator::run_simulatrion);
+		QObject::connect(worker, &LVSimulator::simulationComplete, plotArea, [plotArea](const std::string& result) {
 				plotData(plotArea, result); // This now executes in the main thread
 				}, Qt::QueuedConnection);
 

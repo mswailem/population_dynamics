@@ -14,7 +14,7 @@ find_package(Qt5 COMPONENTS Widgets PrintSupport REQUIRED)
 include_directories(include)
 
 # Define the source files
-set(SOURCE_FILES src/LV.cpp src/SimulationWorker.cpp src/main.cpp  include/qcustomplot.cpp)
+set(SOURCE_FILES src/LVSimulator.cpp src/SimulationWorker.cpp src/main.cpp  include/qcustomplot.cpp)
 set(HEADER_FILES include/SimulationWorker.h)
 
 # Add an executable with the above sources
