@@ -158,10 +158,15 @@ void LatticeSimulator::update_lattice() {
 	}
 }
 
-LatticeSimulator::LatticeSimulator()
-	: N(2, 0) {}
+void LatticeSimulator::StopSimulation() {
+	stop_simulation = true;
+	emit simulation_complete();
+}
 
-void LatticeSimulator::run_simulation(int size, double death, double birth, double pred,int num_of_timesteps, double n0) {
+LatticeSimulator::LatticeSimulator()
+	: N(2, 0) , stop_simulation(false) {}
+
+void LatticeSimulator::run_simulation(int size, double death, double birth, double pred, double n0) {
 	death_rate = death;
 	birth_rate = birth;
 	pred_rate = pred;
@@ -179,14 +184,21 @@ void LatticeSimulator::run_simulation(int size, double death, double birth, doub
 	oss.clear();
 
 
+	int time_lag_counter = 0;
 	//Run the transients simulation
-	for (int t = 0; t < num_of_timesteps ; t++) {
+	while (N[0] > 0 && N[1] > 0 && !stop_simulation) {
 		oss << static_cast<double>(N[0]) / (lattice_size * lattice_size) << " "
 			<< static_cast<double>(N[1]) / (lattice_size * lattice_size) << std::endl;
+		std::cout << oss.str();
+		if (time_lag_counter % 10 == 0) {
+			emit time_step_complete(oss.str());
+		}
 		LatticeSimulator::update_lattice();
+		time_lag_counter++;
 	}
+
+	emit simulation_complete();
 	
-	emit simulationComplete(oss.str());
 
 }
 

@@ -11,11 +11,13 @@ class LatticeSimulator : public QObject {
 	Q_OBJECT
 public:
     LatticeSimulator();
-	void run_simulation(int size, double death, double birth, double pred,int num_of_timesteps, double n0);
+	void run_simulation(int size, double death, double birth, double pred, double n0);
 	void run_simulation_SFML(int size, double death, double birth, double pred, double n0, bool frame_by_frame = false);
+	void StopSimulation(); //This stops the simulation if the user clicks the stop simulation button
 
 signals:
-    void simulationComplete(const std::string& result); // Signal to emit when simulation is done
+    void time_step_complete(const std::string& result); // Signal to emit when a time step is complete													
+	void simulation_complete(); // Signal to emit when the simulation is complete
 
 private:
     std::random_device rd{};
@@ -27,6 +29,7 @@ private:
     std::vector<std::vector<std::vector<int>>> Lattice;
     std::vector<int> N;
 	double pred_prob, death_prob, birth_prob;
+	bool stop_simulation;
 
     void initialize_lattice(int N);
     std::array<int, 2> pick_neighbor_random(int x, int y);
